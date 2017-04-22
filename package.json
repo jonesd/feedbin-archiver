@@ -1,0 +1,10 @@
+{
+  "name": "scraper",
+  "version": "0.0.1",
+  "dependencies": {
+    "async": "2.3.0",
+    "cheerio": "0.22.0",
+    "read-art": "0.5.4",
+    "tmp": "0.0.31"
+  }
+}
