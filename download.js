@@ -1,9 +1,9 @@
 var fs = require('fs');
-var http = require('http');
 var path = require('path');
 
 const async = require('async');
 const cheerio = require('cheerio');
+const request = require('request');
 var tmp = require('tmp');
 
 var basePath = 'out';
@@ -147,16 +147,19 @@ function replaceDownloadableUrls(content, localBasePath, callback) {
 
 function downloadUrl(s, callback) {
   var file = fs.createWriteStream(s.localPath);
-  var request = http.get(s.url, function(response) {
-    response.pipe(file);
-    file.on('finish', function() {
-      file.close(callback);  // close() is async, call cb after close completes.
-    });
-  }).on('error', function(err) {
-    fs.unlink(s.localPath); // Delete the file async. (But we don't check the result)
-    if (callback) {
-      callback(err.message);
-    }
+  request
+    .get(s.url)
+    .on('error', function(err) {
+      if (fs.existsSync(file)) {
+        fs.unlink(s.localPath);
+      }
+      if (callback) {
+        callback(err.message);
+      }
+    })
+    .pipe(file);
+  file.on('finish', function() {
+    file.close(callback);  // close() is async, call cb after close completes.
   });
 }
 
