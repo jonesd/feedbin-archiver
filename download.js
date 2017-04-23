@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var url = require('url');
 
 const async = require('async');
 const cheerio = require('cheerio');
@@ -114,8 +115,14 @@ function extractContent(article) {
 }
 
 function extractAuthor(article) {
-  var author = article.author || 'no author';
-  //fixme extract domain name from url
+  var author = article.author;
+  if (!author) {
+    var hostname = url.parse(article.url).hostname;
+    author = hostname.split('.')[0];
+  }
+  if (!author) {
+    author = 'unknown';
+  }
   return author;
 }
 
@@ -133,8 +140,13 @@ function replaceDownloadableUrls(content, localBasePath, callback) {
     var s = c(this).attr('src');
     if (s) {
       console.log(s);
-      var out = path.join(localBasePath, i.toString());
-      c(this).attr('src', i.toString());
+      var extension = s.split('.').pop();
+      var filename = i.toString();
+      if (extension && extension.length < 6) {
+        filename += '.' + extension;
+      }
+      var out = path.join(localBasePath, filename);
+      c(this).attr('src', filename);
       c(this).attr('alt', 'Original: '+s);
       console.log('s='+s+' out='+out);
       downloads.push({url:s, localPath:out});
@@ -150,6 +162,7 @@ function downloadUrl(s, callback) {
   request
     .get(s.url)
     .on('error', function(err) {
+      console.log('ERROR: download='+s+' '+err);
       if (fs.existsSync(file)) {
         fs.unlink(s.localPath);
       }
