@@ -4,6 +4,7 @@ var url = require('url');
 
 const async = require('async');
 const cheerio = require('cheerio');
+const glob = require('glob');
 const request = require('request');
 var tmp = require('tmp');
 
@@ -21,18 +22,19 @@ const articles = JSON.parse(fs.readFileSync(args[0], 'utf8'));
 processArticles();
 
 function processArticles() {
-  async.eachSeries(articles, function(article, callback) {
-    if (! hasLocal(article)) {
-      console.log('Process: '+article.id);
-      writeArticle(article, callback);
-    } else {
-      console.log('Skip: '+article.id);
-      return callback(null, 'skip');
-    }
-  },
-  function(err,result) {
-    console.log('done '+err);
-  });
+  var localArticleIds = findLocalArticleIds();
+  async.eachSeries(articles, function (article, callback) {
+      if (!hasLocal(article, localArticleIds)) {
+        console.log('Process: ' + article.id + ' '+safeFilename(extractTitle(article)));
+        writeArticle(article, callback);
+      } else {
+        console.log('Skip: ' + article.id);
+        return callback(null, 'skip');
+      }
+    },
+    function (err, result) {
+      console.log('done ' + err);
+    });
 }
 
 function writeArticle(article, callback) {
@@ -40,8 +42,8 @@ function writeArticle(article, callback) {
   createHtml(article, pendingArticleBase, function(err, result) {
     console.log('complete html'+err+result);
     createMetadata(article, pendingArticleBase);
-    var finalArticleBase = articleDirectory(article);
-    commitArticle(pendingArticleBase, finalArticleBase);
+    createIdRecord(article, pendingArticleBase);
+    commitArticle(article, pendingArticleBase);
     console.log('commited ' + article.id);
     return callback(err, article);
   });
@@ -79,12 +81,29 @@ function createMetadata(article, articlePath) {
   fs.writeFileSync(metadataPath, content);
 }
 
-function hasLocal(article) {
-  return fs.existsSync(articleDirectory(article));
+function createIdRecord(article, articlePath) {
+  var id = article.id.toString();
+  var idPath = path.join(articlePath, '.'+id+'.id');
+  fs.writeFileSync(idPath, ''+id);
 }
 
-function articleDirectory(article) {
-  return path.join(basePath, article.id.toString());
+function hasLocal(article, localArticleIds) {
+  return localArticleIds[article.id.toString()];
+}
+
+function createAuthorDirectory(article) {
+  var authorDirectoryName = safeFilename(extractAuthor(article));
+  var authorPath = path.join(basePath, authorDirectoryName);
+  if (!fs.existsSync(authorPath)) {
+    fs.mkdirSync(authorPath);
+  }
+  return authorPath;
+}
+
+function articleDirectory(article, parentPath) {
+  var root = parentPath || basePath;
+  var directoryName = safeFilename(extractTitle(article) + ' '+article.id.toString());
+  return path.join(root, directoryName);
 }
 
 function extractTitle(article) {
@@ -94,7 +113,9 @@ function extractTitle(article) {
 }
 
 function safeFilename(s) {
-  var title = s.replace(/[:\;"'/.?]/g, ' ');
+  var title = s.replace(/[:\;"'/.\?]/g, ' ');
+  title = title.replace(/\s+/g, ' ');
+  title = title.trim();
   if (title.length > 150) {
     title = title.substr(0, 150);
   }
@@ -104,7 +125,6 @@ function safeFilename(s) {
 function extractContentAndDownloadImages(article, articlePath, callback) {
   var content = extractContent(article);
   replaceDownloadableUrls(content, articlePath, function(err, result) {
-    console.log(result);
     return callback(err, result);
   });
 
@@ -121,14 +141,13 @@ function extractAuthor(article) {
     author = hostname.split('.')[0];
   }
   if (!author) {
-    author = 'unknown';
+    author = article.id.toString();
   }
   return author;
 }
 
 function createPendingDirectory(localBasePath) {
   var tmpobj = tmp.dirSync({dir: localBasePath});
-  console.log(tmpobj);
   return tmpobj.name;
 }
 
@@ -148,7 +167,6 @@ function replaceDownloadableUrls(content, localBasePath, callback) {
       var out = path.join(localBasePath, filename);
       c(this).attr('src', filename);
       c(this).attr('alt', 'Original: '+s);
-      console.log('s='+s+' out='+out);
       downloads.push({url:s, localPath:out});
     }
   });
@@ -176,6 +194,21 @@ function downloadUrl(s, callback) {
   });
 }
 
-function commitArticle(pendingArticleBase, finalArticleBase) {
+function commitArticle(article, pendingArticleBase) {
+  var authorBase = createAuthorDirectory(article);
+  var finalArticleBase = articleDirectory(article, authorBase);
   fs.renameSync(pendingArticleBase, finalArticleBase);
+}
+
+function findLocalArticleIds() {
+  var paths = glob.sync('**/.*.id');
+  var localArticleIds = {};
+  paths.forEach(function(p) {
+    var result = p.match(/\.(\w+)\.id$/);
+    if (result[1]) {
+      var id = result[1];
+      localArticleIds[id] = id;
+    }
+  });
+  return localArticleIds;
 }
