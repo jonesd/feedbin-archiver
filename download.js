@@ -19,6 +19,8 @@ if (args.length === 0) {
 
 const articles = JSON.parse(fs.readFileSync(args[0], 'utf8'));
 
+const templateHtml = fs.readFileSync('template.html', 'utf8');
+
 processArticles();
 
 function processArticles() {
@@ -55,21 +57,16 @@ function createHtml(article, articlePath, callback) {
   console.log('title='+title);
   extractContentAndDownloadImages(article, articlePath, function(err, content) {
     //FIXME handle err
+    var html = templateHtml;
     var author = extractAuthor(article);
-    var text = '<html>\n' +
-      '<head>\n' +
-      '<title>' + title + '</title>\n' +
-      '</head>\n' +
-      '<body\n>' +
-      '<h1>' + title + '</h1>\n' +
-      '<h2>' + author + '</h2>\n' +
-      '<div>' + content + '</div>\n' +
-      '</body>\n' +
-      '</html>';
-
+    html = html.replace(/\{\{title\}\}/g, title);
+    html = html.replace(/\{\{author\}\}/g, author);
+    html = html.replace(/\{\{content\}\}/g, content);
+    html = html.replace(/\{\{published\}\}/g, article.published || article.created_at);
+    html = html.replace(/\{\{url\}\}/g, article.url);
     var titleFilename = safeFilename(title);
     var htmlPath = path.join(articlePath, titleFilename + '.html');
-    fs.writeFileSync(htmlPath, text);
+    fs.writeFileSync(htmlPath, html);
     return callback(err, htmlPath);
   });
 }
