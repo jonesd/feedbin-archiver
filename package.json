@@ -1,6 +1,7 @@
 {
   "name": "feedbin-archiver",
   "version": "0.1.0",
+  "license" : "MIT",
   "dependencies": {
     "async": "2.3.0",
     "cheerio": "0.22.0",
