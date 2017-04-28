@@ -21,16 +21,11 @@ describe('article-template', function() {
     it('contains title template', function() {
       var html = articleTemplate.render(article);
       html.should.containEql('<title>test article</title>');
-      html.should.containEql('<h1>test article</h1>');
-    });
-    it('contains title template', function() {
-      var html = articleTemplate.render(article);
-      html.should.containEql('<title>test article</title>');
-      html.should.containEql('<h1>test article</h1>');
+      html.should.containEql('<h1 class="p-name">test article</h1>');
     });
     it('contains author', function() {
       var html = articleTemplate.render(article);
-      html.should.containEql('<h2>test author</h2>');
+      html.should.containEql('<h2 class="p-author">test author</h2>');
     });
     it('contains content', function() {
       var html = articleTemplate.render(article);
@@ -44,16 +39,16 @@ describe('article-template', function() {
     });
     it('contains original url', function() {
       var html = articleTemplate.render(article);
-      html.should.containEql('<p>Original URL: http://test.com/article</p>');
+      html.should.containEql('<p>Original URL: <a class="u-url" href="http://test.com/article">http://test.com/article</a></p>');
     });
     it('contains published timestamp', function() {
       var html = articleTemplate.render(article);
-      html.should.containEql('<p>Date: 2014-07-29T10:46:31.000000Z</p>');
+      html.should.containEql('<p>Date: <time class="p-publication">2014-07-29T10:46:31.000000Z</time></p>');
     });
     it('faills back to created timestamp when published missing', function() {
       article.published = null;
       var html = articleTemplate.render(article);
-      html.should.containEql('<p>Date: 2014-07-29T11:06:04.740551Z</p>');
+      html.should.containEql('<p>Date: <time class="p-publication">2014-07-29T11:06:04.740551Z</time></p>');
     });
   });
 });
