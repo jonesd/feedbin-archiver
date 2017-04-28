@@ -23,8 +23,8 @@ Commad Line Help
 
     Options:
       -t, --template  Article HTML output template                          [string]
+      -f, --force     Download article eve if local copy exists            [boolean]
       -v, --verbose   Verbose logging                                      [boolean]
       -h, --help      Show help                                            [boolean]
       --version       Show version number                                  [boolean]
-
 
