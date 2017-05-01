@@ -61,5 +61,17 @@ describe('local-copy', function() {
       c.html().should.equal(source);
       downloads.length.should.eql(0);
     });
+    it('transform tumblr', function() {
+      var source = '<html><body>one <img src="http://41.media.tumblr.com/abc_500.jpg"></body></html>';
+      var c = cheerio.load(source);
+      localCopy.test_handleImages(c, 'base', downloads);
+
+      downloads.should.eql([
+        {
+          localPath: 'base/0.jpg',
+          url: 'https://37.media.tumblr.com/abc_500.jpg'
+        }
+      ]);
+    });
   });
 });
