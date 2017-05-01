@@ -53,5 +53,13 @@ describe('local-copy', function() {
       c.html().should.equal(source);
       downloads.length.should.eql(0);
     });
+    it('ignores adverts', function() {
+      var source = '<html><body>one <img src="http://imageads.googleadservices.com/pagead.jpg"></body></html>';
+      var c = cheerio.load(source);
+      localCopy.test_handleImages(c, 'base', downloads);
+
+      c.html().should.equal(source);
+      downloads.length.should.eql(0);
+    });
   });
 });
