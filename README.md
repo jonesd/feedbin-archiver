@@ -14,7 +14,7 @@ The archiver processes a starred.json as downloaded from Feedbin.
 
 This will trigger the creation of the export file. After a few minutes an email with a download link will be sent to you. Download the referenced file to your machine.
 
-You should end up with
+You should end up with a file name starred.json
 
 # Docker
 
@@ -22,11 +22,15 @@ The easiest way to run the archiver is to use the Docker image.
 
     $ docker....
 
-Where archive-starred is a directory where the downloaded articles will be stored, and Starred.json is the unzipped starred email accesible from the feedbin email.
+Where archive-starred is a directory where the downloaded articles will be stored, and starred.json is the unzipped starred link from the feedbin email.
 
 On linux you can define a bash function to make it easier to run:
 
+    $ feedbin-archive() { docker run --rm -ti -v $1:/data/archive -v $2:/data/source.json -u `id -u` --group-add `id -g`  jonesd/feedbin-archive node lib/feedbin-archiver -v /data/archive /data/source.json; }
 
+Then to run it:
+
+    $ feedbin-archive $PWD/archive-starred $PWD/starred.json
 
 
 # Build and Run
