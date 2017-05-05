@@ -20,7 +20,7 @@ You should end up with a file name starred.json
 
 The easiest way to run the archiver is to use the Docker image.
 
-    $ docker....
+    $ docker run --rm -ti -v $PWD/archive-starred:/data/archive -v $PWD/starred.json:/data/source.json -u `id -u` --group-add `id -g`  jonesd/feedbin-archive node lib/feedbin-archiver -v /data/archive /data/source.json
 
 Where archive-starred is a directory where the downloaded articles will be stored, and starred.json is the unzipped starred link from the feedbin email.
 
@@ -40,7 +40,7 @@ Download your Starred items for FeedBin, and unzip the result. Should have a Sta
 Install NodeJS 6 or newer.
 
     $ npm install
-    $ node lib/feedbin-archive archive-starred Starred.json
+    $ node lib/feedbin-archive archive-starred starred.json
 
 
 # Command Line Help
